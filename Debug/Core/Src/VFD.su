@@ -1,0 +1,7 @@
+../Core/Src/VFD.c:14:6:init_array	32	static
+../Core/Src/VFD.c:40:6:vfd_clear	16	static
+../Core/Src/VFD.c:47:6:vfd_clear_line	24	static
+../Core/Src/VFD.c:61:6:vfd_print	24	static
+../Core/Src/VFD.c:89:9:vfd_print_symbol	24	static
+../Core/Src/VFD.c:118:6:vfd_display_error	16	static
+../Core/Src/VFD.c:134:6:vfd_set_brightness	32	static

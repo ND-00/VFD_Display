@@ -1,0 +1,7 @@
+VFD.c:14:6:init_array	8
+VFD.c:40:6:vfd_clear	3
+VFD.c:47:6:vfd_clear_line	3
+VFD.c:61:6:vfd_print	6
+VFD.c:89:9:vfd_print_symbol	5
+VFD.c:118:6:vfd_display_error	1
+VFD.c:134:6:vfd_set_brightness	5
