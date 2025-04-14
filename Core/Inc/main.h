@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define LAT_GPIO_Port GPIOA
 #define SIN_Pin GPIO_PIN_3
 #define SIN_GPIO_Port GPIOA
+#define BTN_Pin GPIO_PIN_4
+#define BTN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

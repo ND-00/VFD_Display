@@ -1,3 +1,4 @@
+
 #include "main.h"
 #include "ASCII_array.h"
 #include "VFD.h"
@@ -25,9 +26,9 @@ struct weather_t weather[4];
 struct tm 	*current_time;
 uint8_t 	flag_time_inc = 0x00;
 uint8_t 	display_mode  = 0x01;
-char *weeks[7] =   {"Р’РѕСЃРєСЂРµСЃРµРЅСЊРµ", "РџРѕРЅРµРґРµР»СЊРЅРёРє", "    Р’С‚РѕСЂРЅРёРє", "      РЎСЂРµРґР°", "    Р§РµС‚РІРµСЂРі", "    РџСЏС‚РЅРёС†Р°", "    РЎСѓР±Р±РѕС‚Р°" };
-char *months[12] = { "РЇРЅРІР°СЂСЏ  ", "Р¤РµРІСЂР°Р»СЏ ", "РњР°СЂС‚Р°   ", "РђРїСЂРµР»СЏ  ", "РњР°СЏ     ", "РСЋРЅСЏ    ",
-					 "РСЋР»СЏ    ", "РђРІРіСѓСЃС‚Р° ", "РЎРµРЅС‚СЏР±СЂСЏ", "РћРєС‚СЏР±СЂСЏ ", "РќРѕСЏР±СЂСЏ  ", "Р”РµРєР°Р±СЂСЏ " };
+char *weeks[7] =   {"Воскресенье", "Понедельник", "    Вторник", "      Среда", "    Четверг", "    Пятница", "    Суббота" };
+char *months[12] = { "Января  ", "Февраля ", "Марта   ", "Апреля  ", "Мая     ", "Июня    ",
+					 "Июля    ", "Августа ", "Сентября", "Октября ", "Ноября  ", "Декабря " };
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -53,7 +54,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	}
 	if(htim->Instance == htim3.Instance)
 	{
-		flag_time_inc++;
+		flag_time_inc = 1;
 		unix_time++;
 
 		if(display_mode)
@@ -69,10 +70,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	Wifi_RxCallBack();
-}
+
 
 int main(void)
 {
@@ -90,23 +88,23 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim1);
 
 	init_array();
-	vfd_print("VFD Р§Р°СЃС‹ v0.2", 0, 3);
-	HAL_Delay(5000);
+	vfd_print("VFD Часы v0.3", 0, 3);
+	HAL_Delay(3000);
 
 	while(!esp_init())
 	  vfd_display_error(1);
 
-	vfd_print("РЎРѕРµРґРёРЅРµРЅРёРµ", 0, 5);
-	vfd_print("РЈСЃС‚Р°РЅРѕРІР»РµРЅРѕ!", 1, 4);
+	vfd_print("Соединение", 0, 5);
+	vfd_print("Установлено!", 1, 4);
 
 	uint8_t fail_counter = 0;
 	vfd_clear();
-	vfd_print("РџРѕР»СѓС‡РµРЅРёРµ РІСЂРµРјРµРЅРё", 0, 0);
+	vfd_print("Получение времени", 0, 0);
 
 	while(!WiFi_GetTime(&unix_time))
 	{
 		vfd_clear();
-		vfd_print("Р’СЂРµРјСЏ РЅРµ РїРѕР»СѓС‡РµРЅРѕ", 0, 0);
+		vfd_print("Время не получено", 0, 0);
 		if(fail_counter++ > 5)
 		{
 			while(!esp_init()) vfd_display_error(1);
@@ -116,11 +114,11 @@ int main(void)
 	}
 
 	vfd_clear();
-	vfd_print("РџРѕР»СѓС‡РµРЅРёРµ РїРѕРіРѕРґС‹", 0, 0);
+	vfd_print("Получение погоды", 0, 0);
 	while(!WiFi_GetWeather(weather))
 	{
 		vfd_clear();
-		vfd_print("РџРѕРіРѕРґР° РЅРµ РїРѕР»СѓС‡РµРЅР°", 0, 0);
+		vfd_print("Погода не получена", 0, 0);
 		if(fail_counter++ > 5)
 		{
 			while(!esp_init()) vfd_display_error(1);
@@ -136,15 +134,15 @@ int main(void)
 	{
 		if(flag_time_inc)
 		{
-			if((unix_time % 300) == 0)
+			if((unix_time % 1800) == 0)
 			{
 				vfd_clear();
-				vfd_print("РћР±РЅРѕРІР»РµРЅРёРµ РїРѕРіРѕРґС‹", 0, 0);
+				vfd_print("Обновление погоды", 0, 0);
 				if(!WiFi_GetWeather(weather))
 					vfd_print(" ERROR!!!", 1 , 0);
 				else
 					vfd_print(" OK ", 1, 0);
-				HAL_Delay(400);
+				HAL_Delay(200);
 			}
 			if(!HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin))
 			{
@@ -165,7 +163,7 @@ int main(void)
 															 current_time->tm_sec,
 															 weeks[current_time->tm_wday]);
 				vfd_print(time_string, 0, 0);
-				sprintf(time_string, "%d %s%s%d РіРѕРґ", 		 current_time->tm_mday,
+				sprintf(time_string, "%d %s%s%d год", 		 current_time->tm_mday,
 															 months[current_time->tm_mon],
 															 current_time->tm_mday > 9 ? " ":"  ",
 															 current_time->tm_year + 1900);
@@ -393,7 +391,7 @@ int _write(int file, char *ptr, int len)
 uint8_t esp_init()
 {
 	uint8_t offset = 0;
- 	vfd_print("РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє WiFi:", 0, 0);
+ 	vfd_print("Подключение к WiFi:", 0, 0);
 
  	if(!Wifi_Restart())
 		return 0x00;
@@ -407,7 +405,7 @@ uint8_t esp_init()
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);
 	offset += 4;
 
-	if(!Wifi_SetMode(WifiMode_StationAndSoftAp))
+	if(!Wifi_SetMode(WifiMode_Station))
 		return 0x00;
 	HAL_Delay(500);
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);

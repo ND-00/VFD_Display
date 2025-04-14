@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (10.3-2021.10)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -60,8 +60,8 @@ all: main-build
 main-build: VFD_Display.elf secondary-outputs
 
 # Tool invocations
-VFD_Display.elf VFD_Display.map: $(OBJS) $(USER_OBJS) C:\Users\Nick\STM32CubeIDE\workspace_1.9.0\VFD_Display\STM32F401CCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "VFD_Display.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Nick\STM32CubeIDE\workspace_1.9.0\VFD_Display\STM32F401CCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="VFD_Display.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+VFD_Display.elf VFD_Display.map: $(OBJS) $(USER_OBJS) C:\Users\dolgu\git\VFD_Clock\STM32F401CCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "VFD_Display.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\dolgu\git\VFD_Clock\STM32F401CCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="VFD_Display.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

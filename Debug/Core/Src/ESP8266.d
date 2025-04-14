@@ -29,7 +29,7 @@ Core/Src/ESP8266.o: ../Core/Src/ESP8266.c ../Core/Inc/ESP8266.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/ESP8266Config.h
+ ../Core/Inc/service.h ../Core/Inc/ESP8266Config.h ../Core/Inc/service.h
 ../Core/Inc/ESP8266.h:
 ../Core/Inc/ESP8266Config.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h:
@@ -61,4 +61,6 @@ Core/Src/ESP8266.o: ../Core/Src/ESP8266.c ../Core/Inc/ESP8266.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
+../Core/Inc/service.h:
 ../Core/Inc/ESP8266Config.h:
+../Core/Inc/service.h:
