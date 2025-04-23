@@ -8,10 +8,10 @@ Wifi_t Wifi;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-//	if (huart->Instance == _WIFI_USART.Instance)
-//	{
+	if (huart->Instance == _WIFI_USART.Instance)
+	{
 		Wifi_RxCallBack();
-//	}
+	}
 }
 uint8_t Wifi_SendRaw(uint8_t *data, uint16_t len)
 {
@@ -82,7 +82,7 @@ uint8_t WiFi_GetTime(time_t *time)
 			break;
 
 		Wifi_RxClear();
-		if (Wifi_WaitForString(_WIFI_WAIT_TIME_LOW, &result, 1, "+IPD") == 0x00)
+		if (Wifi_WaitForString(_WIFI_WAIT_TIME_MED, &result, 1, "+IPD") == 0x00)
 			break;
 
 
@@ -110,7 +110,7 @@ uint8_t WiFi_GetWeather(struct weather_t weather[4])
 	do{
 		Wifi_RxClear();
 
-		if(!Wifi_TcpIp_StartTcpConnection(0, ip_weather, 80, 500))
+		if(!Wifi_TcpIp_StartTcpConnection(0, ip_weather, 80, 2000))
 			break;
 
 		if(!Wifi_TcpIp_SendDataTcp(0, strlen(weather_request), (uint8_t*)weather_request))
@@ -152,6 +152,21 @@ uint8_t WiFi_GetWeather(struct weather_t weather[4])
 	return 0x00;
 }
 
+uint8_t Wifi_ExtractPostParam(char* key, char* output, size_t max_len) {
+    char* start = strstr((char*)Wifi.RxBuffer, key);
+    if (start) {
+        start += strlen(key); // пропустить ключ
+        char* end = strchr(start, '&');
+        if (!end) end = strchr(start, '\0');
+        size_t len = (end - start < max_len - 1) ? end - start : max_len - 1;
+        strncpy(output, start, len);
+        output[len] = '\0';
+        return 0x01; // найдено
+    } else {
+        output[0] = '\0';
+        return 0x00;// не найдено
+    }
+}
 
 uint8_t Wifi_ReturnString(char *result, uint8_t WantWhichOne, char *SplitterChars)
 {

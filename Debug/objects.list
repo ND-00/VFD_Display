@@ -1,4 +1,5 @@
 "./Core/Src/ESP8266.o"
+"./Core/Src/FlashSetting.o"
 "./Core/Src/VFD.o"
 "./Core/Src/main.o"
 "./Core/Src/service.o"

@@ -81,7 +81,7 @@ void 	Wifi_RxClear(void);
 uint8_t Wifi_SendString(char *data);
 uint8_t Wifi_WaitForString(uint32_t TimeOut_ms,uint8_t *result,uint8_t CountOfParameter,...);
 void 	Wifi_RxCallBack(void);
-
+uint8_t Wifi_ExtractPostParam(char* key, char* output, size_t max_len);
 // Basic functions of ESP8266
 uint8_t Wifi_Init(void);
 uint8_t Wifi_Restart(void);

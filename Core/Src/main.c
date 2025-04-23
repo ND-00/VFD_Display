@@ -6,6 +6,8 @@
 #include <time.h>
 #include "string.h"
 #include "service.h"
+#include "website.h"
+#include "FlashSetting.h"
 
 SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim1;
@@ -16,10 +18,8 @@ UART_HandleTypeDef huart1;
 
 extern uint8_t output_screen_buff_bin[20][198];
 
-char SSID[] = "astronel.ru";
-char Pass[] = "Of97U1iqf";
-
 char esp_ip[16];
+char SSID[64], Password[64];
 
 time_t 		unix_time;
 struct weather_t weather[4];
@@ -38,9 +38,11 @@ static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
 
-uint8_t esp_init();
-uint8_t esp_get_time();
-uint8_t esp_get_weather();
+uint8_t esp_client_init();
+uint8_t esp_server_init();
+uint8_t esp_update_AP();
+void extract_param(const char* body, const char* key, char* output, size_t max_len);
+
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
@@ -70,8 +72,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	}
 }
 
-
-
 int main(void)
 {
 	HAL_Init();
@@ -88,11 +88,31 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim1);
 
 	init_array();
-	vfd_print("VFD Часы v0.3", 0, 3);
+	vfd_print("VFD Часы v0.4", 0, 3);
+	load_config_from_flash(SSID, Password);
 	HAL_Delay(3000);
 
-	while(!esp_init())
-	  vfd_display_error(1);
+	if(SSID == "" || HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin))
+	{
+		if(esp_server_init()){
+			while(!esp_update_AP());
+		}
+	}
+	uint8_t err_cnt = 0;
+	while(1) {
+		if(err_cnt>3){
+			if(!esp_server_init())
+				continue;
+			while(!esp_update_AP());
+			err_cnt = 0;
+		}
+		else if(!esp_client_init()){
+			vfd_display_error(1);
+			err_cnt++;
+		}
+		else
+			break;
+	}
 
 	vfd_print("Соединение", 0, 5);
 	vfd_print("Установлено!", 1, 4);
@@ -107,7 +127,7 @@ int main(void)
 		vfd_print("Время не получено", 0, 0);
 		if(fail_counter++ > 5)
 		{
-			while(!esp_init()) vfd_display_error(1);
+			while(!esp_client_init()) vfd_display_error(1);
 			fail_counter = 0;
 		}
 		HAL_Delay(2000);
@@ -121,7 +141,7 @@ int main(void)
 		vfd_print("Погода не получена", 0, 0);
 		if(fail_counter++ > 5)
 		{
-			while(!esp_init()) vfd_display_error(1);
+			while(!esp_client_init()) vfd_display_error(1);
 			fail_counter = 0;
 		}
 		HAL_Delay(2000);
@@ -142,15 +162,14 @@ int main(void)
 					vfd_print(" ERROR!!!", 1 , 0);
 				else
 					vfd_print(" OK ", 1, 0);
-				HAL_Delay(200);
 			}
 			if(!HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin))
 			{
-				static uint8_t flag_dot = 0x00;
+				static uint8_t dot_flag = 0x00;
 				static char dot_char;
 				current_time = localtime(&unix_time);
 
-				if(flag_dot)
+				if(dot_flag)
 					dot_char = ':';
 				else
 					dot_char = SYM_A_DOUBLE_DOT;
@@ -168,7 +187,7 @@ int main(void)
 															 current_time->tm_mday > 9 ? " ":"  ",
 															 current_time->tm_year + 1900);
 				vfd_print(time_string, 1, 0);
-				flag_dot = !flag_dot;
+				dot_flag = !dot_flag;
 			}
 			else
 			{
@@ -388,9 +407,10 @@ int _write(int file, char *ptr, int len)
     return len;
 }
 
-uint8_t esp_init()
+uint8_t esp_client_init()
 {
 	uint8_t offset = 0;
+
  	vfd_print("Подключение к WiFi:", 0, 0);
 
  	if(!Wifi_Restart())
@@ -401,25 +421,97 @@ uint8_t esp_init()
 
 	if(!Wifi_Init())
 		return 0x00;
-	HAL_Delay(500);
+	HAL_Delay(100);
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);
 	offset += 4;
 
 	if(!Wifi_SetMode(WifiMode_Station))
 		return 0x00;
-	HAL_Delay(500);
+	HAL_Delay(100);
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);
 	offset += 4;
 
-	if(!Wifi_Station_ConnectToAp(SSID, Pass, NULL))
+	load_config_from_flash(SSID, Password);
+	if(!Wifi_Station_ConnectToAp(SSID, Password, NULL))
 		return 0x00;
-	HAL_Delay(2000);
+	HAL_Delay(200);
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);
 
-	HAL_Delay(500);
+	HAL_Delay(100);
 	vfd_clear();
-	return 1;
+	return 0x01;
 }
+
+uint8_t esp_server_init()
+{
+	char IP[20];
+ 	vfd_print("Настройка по адресу:", 0, 0);
+
+ 	if(!Wifi_Restart())
+		return 0x00;
+	HAL_Delay(500);
+
+	if(!Wifi_Init())
+		return 0x00;
+
+	if(!Wifi_SetMode(WifiMode_SoftAp))
+		return 0x00;
+
+	if(!Wifi_SoftAp_Create("VFD_CLOCK", "20142015", 1, WifiEncryptionType_WPA2_PSK, 1, 0))
+		return 0x00;
+
+	if(!Wifi_TcpIp_SetMultiConnection(1))
+		return 0x00;
+
+	if(!Wifi_TcpIp_SetEnableTcpServer(80))
+		return 0x00;
+
+	if(!Wifi_GetMyIp(IP))
+		return 0x00;
+
+	Wifi_RxClear();
+ 	vfd_print(IP, 1, 0);
+
+	return 0x01;
+}
+
+uint8_t esp_update_AP(){
+	uint8_t result;
+
+	if (!Wifi_WaitForString(_WIFI_WAIT_TIME_FOREWER, &result, 2, "GET / HTTP", "POST /connect"))
+		return 0;
+
+	if(result == 1){
+		if(!Wifi_TcpIp_SendDataTcp(0, strlen(html_page), html_page))
+			return 0;
+	}
+	else if(result == 2){
+		char ssid_req[64], password_req[64];
+		HAL_Delay(100);
+		Wifi_ExtractPostParam("ssid=", &ssid_req, 64);
+		Wifi_ExtractPostParam("password=", &password_req, 64);
+
+		save_config_to_flash(ssid_req, password_req);
+
+		for(uint8_t i = 0; i < 64; i++)
+		{
+			password_req[i] = 0;
+			ssid_req[i] = 0;
+		}
+
+		if(!Wifi_TcpIp_SendDataTcp(0, strlen(config_saved_page), config_saved_page))
+			return 0;
+		return 1;
+
+	}
+
+	if(!Wifi_TcpIp_Close(0))
+		return 0;
+
+	return 0;
+}
+
+
 
 void Error_Handler(void)
 {

@@ -117,17 +117,12 @@ uint8_t vfd_print_symbol (uint8_t sym, uint8_t line, uint8_t offset, uint8_t amo
 
 void vfd_display_error(uint8_t line)
 {
-	vfd_clear_line(1);
-	vfd_print("ERROR!!!", line, 5);
-	HAL_Delay(400);
-	vfd_clear_line(1);
-	HAL_Delay(400);
-	vfd_print("ERROR!!!", line, 5);
-	HAL_Delay(400);
-	vfd_clear_line(1);
-	HAL_Delay(400);
-	vfd_print("ERROR!!!", line, 5);
-	HAL_Delay(400);
+	for(int i = 0; i < 3; i++){
+		vfd_clear_line(1);
+		HAL_Delay(400);
+		vfd_print("ERROR!!!", line, 5);
+		HAL_Delay(400);
+	}
 	vfd_clear_line(1);
 }
 
