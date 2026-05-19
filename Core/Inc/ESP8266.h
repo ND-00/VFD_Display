@@ -74,6 +74,8 @@ typedef struct
 	WifiConnection_t        TcpIpConnections[5];
 }Wifi_t;
 
+extern Wifi_t Wifi;
+
 uint8_t WiFi_GetTime(time_t *result);
 uint8_t WiFi_GetWeather(struct weather_t weather[4]);
 

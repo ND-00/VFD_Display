@@ -1,4 +1,4 @@
-
+п»ї
 #include "main.h"
 #include "ASCII_array.h"
 #include "VFD.h"
@@ -26,10 +26,9 @@ struct weather_t weather[4];
 struct tm 	*current_time;
 uint8_t 	flag_time_inc = 0x00;
 uint8_t 	display_mode  = 0x01;
-char *weeks[7] =   {"Воскресенье", "Понедельник", "    Вторник", "      Среда", "    Четверг", "    Пятница", "    Суббота" };
-char *months[12] = { "Января  ", "Февраля ", "Марта   ", "Апреля  ", "Мая     ", "Июня    ",
-					 "Июля    ", "Августа ", "Сентября", "Октября ", "Ноября  ", "Декабря " };
-
+char *weeks[7] =   {"Р’РѕСЃРєСЂРµСЃРµРЅСЊРµ", "РџРѕРЅРµРґРµР»СЊРЅРёРє", "    Р’С‚РѕСЂРЅРёРє", "      РЎСЂРµРґР°", "    Р§РµС‚РІРµСЂРі", "    РџСЏС‚РЅРёС†Р°", "    РЎСѓР±Р±РѕС‚Р°" };
+char *months[12] = { "РЇРЅРІР°СЂСЏ  ", "Р¤РµРІСЂР°Р»СЏ ", "РњР°СЂС‚Р°   ", "РђРїСЂРµР»СЏ  ", "РњР°СЏ     ", "РСЋРЅСЏ    ",
+					 "РСЋР»СЏ    ", "РђРІРіСѓСЃС‚Р° ", "РЎРµРЅС‚СЏР±СЂСЏ", "РћРєС‚СЏР±СЂСЏ ", "РќРѕСЏР±СЂСЏ  ", "Р”РµРєР°Р±СЂСЏ " };
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
@@ -88,7 +87,7 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim1);
 
 	init_array();
-	vfd_print("VFD Часы v0.4", 0, 3);
+	vfd_print("VFD Р§Р°СЃС‹ v0.4", 0, 3);
 	load_config_from_flash(SSID, Password);
 	HAL_Delay(3000);
 
@@ -114,17 +113,17 @@ int main(void)
 			break;
 	}
 
-	vfd_print("Соединение", 0, 5);
-	vfd_print("Установлено!", 1, 4);
+	vfd_print("РЎРѕРµРґРёРЅРµРЅРёРµ", 0, 5);
+	vfd_print("РЈСЃС‚Р°РЅРѕРІР»РµРЅРѕ!", 1, 4);
 
 	uint8_t fail_counter = 0;
 	vfd_clear();
-	vfd_print("Получение времени", 0, 0);
+	vfd_print("РџРѕР»СѓС‡РµРЅРёРµ РІСЂРµРјРµРЅРё", 0, 0);
 
 	while(!WiFi_GetTime(&unix_time))
 	{
 		vfd_clear();
-		vfd_print("Время не получено", 0, 0);
+		vfd_print("Р’СЂРµРјСЏ РЅРµ РїРѕР»СѓС‡РµРЅРѕ", 0, 0);
 		if(fail_counter++ > 5)
 		{
 			while(!esp_client_init()) vfd_display_error(1);
@@ -134,11 +133,11 @@ int main(void)
 	}
 
 	vfd_clear();
-	vfd_print("Получение погоды", 0, 0);
+	vfd_print("РџРѕР»СѓС‡РµРЅРёРµ РїРѕРіРѕРґС‹", 0, 0);
 	while(!WiFi_GetWeather(weather))
 	{
 		vfd_clear();
-		vfd_print("Погода не получена", 0, 0);
+		vfd_print("РџРѕРіРѕРґР° РЅРµ РїРѕР»СѓС‡РµРЅР°", 0, 0);
 		if(fail_counter++ > 5)
 		{
 			while(!esp_client_init()) vfd_display_error(1);
@@ -157,7 +156,7 @@ int main(void)
 			if((unix_time % 1800) == 0)
 			{
 				vfd_clear();
-				vfd_print("Обновление погоды", 0, 0);
+				vfd_print("РћР±РЅРѕРІР»РµРЅРёРµ РїРѕРіРѕРґС‹", 0, 0);
 				if(!WiFi_GetWeather(weather))
 					vfd_print(" ERROR!!!", 1 , 0);
 				else
@@ -182,7 +181,7 @@ int main(void)
 															 current_time->tm_sec,
 															 weeks[current_time->tm_wday]);
 				vfd_print(time_string, 0, 0);
-				sprintf(time_string, "%d %s%s%d год", 		 current_time->tm_mday,
+				sprintf(time_string, "%d %s%s%d РіРѕРґ", 		 current_time->tm_mday,
 															 months[current_time->tm_mon],
 															 current_time->tm_mday > 9 ? " ":"  ",
 															 current_time->tm_year + 1900);
@@ -411,11 +410,24 @@ uint8_t esp_client_init()
 {
 	uint8_t offset = 0;
 
- 	vfd_print("Подключение к WiFi:", 0, 0);
+ 	vfd_print("РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє WiFi:", 0, 0);
 
  	if(!Wifi_Restart())
 		return 0x00;
-	HAL_Delay(500);
+	Wifi_RxClear();
+	{
+		uint8_t found = 0;
+		for (uint32_t t = 0; t < _WIFI_WAIT_TIME_MED; t += 20) {
+			HAL_Delay(20);
+			for (uint16_t i = 0; i + 5 <= Wifi.RxIndex; i++)
+			if (memcmp(&Wifi.RxBuffer[i], "ready", 5) == 0) {
+				found = 1;
+				break;
+			}
+		}
+		if (!found)
+			return 0x00;
+	}
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);
 	offset += 4;
 
@@ -434,7 +446,17 @@ uint8_t esp_client_init()
 	load_config_from_flash(SSID, Password);
 	if(!Wifi_Station_ConnectToAp(SSID, Password, NULL))
 		return 0x00;
-	HAL_Delay(200);
+
+	char ip[16];
+	uint8_t ip_tries = 10;
+	do {
+		HAL_Delay(500);
+		if(Wifi_GetMyIp(ip) && strcmp(ip, "0.0.0.0") != 0)
+			break;
+	} while(--ip_tries);
+	if(ip_tries == 0)
+		return 0x00;
+
 	vfd_print_symbol(SYM_PROGRESS_BAR, 1, offset, 4);
 
 	HAL_Delay(100);
@@ -445,11 +467,11 @@ uint8_t esp_client_init()
 uint8_t esp_server_init()
 {
 	char IP[20];
- 	vfd_print("Настройка по адресу:", 0, 0);
+ 	vfd_print("РќР°СЃС‚СЂРѕР№РєР° РїРѕ Р°РґСЂРµСЃСѓ:", 0, 0);
 
  	if(!Wifi_Restart())
 		return 0x00;
-	HAL_Delay(500);
+	HAL_Delay(2500);
 
 	if(!Wifi_Init())
 		return 0x00;
@@ -488,8 +510,8 @@ uint8_t esp_update_AP(){
 	else if(result == 2){
 		char ssid_req[64], password_req[64];
 		HAL_Delay(100);
-		Wifi_ExtractPostParam("ssid=", &ssid_req, 64);
-		Wifi_ExtractPostParam("password=", &password_req, 64);
+		Wifi_ExtractPostParam("ssid=", ssid_req, 64);
+		Wifi_ExtractPostParam("password=", password_req, 64);
 
 		save_config_to_flash(ssid_req, password_req);
 

@@ -70,7 +70,6 @@ uint8_t WiFi_GetTime(time_t *time)
 //	static uint8_t ntp_request[48] = { 0xB1, 0x01, 0x00, 0x00 };
 	static uint8_t ntp_request[48] = { 0xE3, 0x00, 0x05, 0xEC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x31, 0x4E, 0x31, 0x34 };
 	uint64_t ntp_time = 0;
-	int16_t index_data;
 	uint8_t result;
 	do{
 		Wifi_RxClear();
@@ -85,9 +84,16 @@ uint8_t WiFi_GetTime(time_t *time)
 		if (Wifi_WaitForString(_WIFI_WAIT_TIME_MED, &result, 1, "+IPD") == 0x00)
 			break;
 
+		char *ipd = strstr((char*)Wifi.RxBuffer, "+IPD");
+		if (ipd == NULL)
+			break;
+		char *ntp_data = strchr(ipd, ':');
+		if (ntp_data == NULL)
+			break;
+		ntp_data++;
 
 		for (uint8_t i = 0; i < 8; i++)
-			ntp_time |= (uint64_t) Wifi.RxBuffer[i + 50] << (8 * (7 - i));
+			ntp_time |= (uint64_t) ((uint8_t*)ntp_data)[40 + i] << (8 * (7 - i));
 
 		if (ntp_time < 2208988800UL)
 			break;
@@ -104,7 +110,7 @@ uint8_t WiFi_GetTime(time_t *time)
 
 uint8_t WiFi_GetWeather(struct weather_t weather[4])
 {
-	static char weather_request[] = "GET /data/2.5/forecast?units=metric&id=515012&cnt=8&appid=6a88b56548bc1e37c7236afb26b66103 HTTP/1.1\r\nHost: api.openweathermap.org\r\n\r\n";
+	static char weather_request[] = "GET /data/2.5/forecast?units=metric&id=515012&cnt=4&appid=6a88b56548bc1e37c7236afb26b66103 HTTP/1.1\r\nHost: api.openweathermap.org\r\n\r\n";
 	char ip_weather[] = "api.openweathermap.org";
 	uint8_t result;
 	do{
@@ -155,16 +161,16 @@ uint8_t WiFi_GetWeather(struct weather_t weather[4])
 uint8_t Wifi_ExtractPostParam(char* key, char* output, size_t max_len) {
     char* start = strstr((char*)Wifi.RxBuffer, key);
     if (start) {
-        start += strlen(key); // пропустить ключ
+        start += strlen(key); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         char* end = strchr(start, '&');
         if (!end) end = strchr(start, '\0');
         size_t len = (end - start < max_len - 1) ? end - start : max_len - 1;
         strncpy(output, start, len);
         output[len] = '\0';
-        return 0x01; // найдено
+        return 0x01; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     } else {
         output[0] = '\0';
-        return 0x00;// не найдено
+        return 0x00;// пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     }
 }
 
@@ -222,7 +228,6 @@ uint8_t Wifi_ReturnStrings(char *InputString, char *SplitterChars, uint8_t Count
 
 uint8_t Wifi_ReturnInteger(int32_t *result, uint8_t WantWhichOne, char *SplitterChars)
 {
-	if ((char*) Wifi.RxBuffer == NULL) return 0x00;
 	if (Wifi_ReturnString((char*) Wifi.RxBuffer, WantWhichOne, SplitterChars) == 0x00) return 0x00;
 	*result = atoi((char*) Wifi.RxBuffer);
 	return 0x01;
@@ -230,7 +235,7 @@ uint8_t Wifi_ReturnInteger(int32_t *result, uint8_t WantWhichOne, char *Splitter
 
 uint8_t Wifi_ReturnFloat(float *result, uint8_t WantWhichOne, char *SplitterChars)
 {
-	if ((char*) Wifi.RxBuffer == NULL) return 0x00;
+
 	if (Wifi_ReturnString((char*) Wifi.RxBuffer, WantWhichOne, SplitterChars) == 0x00) return 0x00;
 	*result = atof((char*) Wifi.RxBuffer);
 	return 0x01;
@@ -395,7 +400,8 @@ uint8_t Wifi_GetMode(void)
 		if (result == 2)		// It was find the "ERROR" String in the receiving information
 		break;
 
-		if (Wifi_ReturnInteger((int32_t*) &result, 1, ":")) Wifi.Mode = (WifiMode_t) result;
+		int32_t tmp;
+		if (Wifi_ReturnInteger(&tmp, 1, ":")) Wifi.Mode = (WifiMode_t) tmp;
 		else Wifi.Mode = WifiMode_Error;
 		returnVal = 0x01;
 	}
@@ -522,9 +528,9 @@ uint8_t Wifi_Station_DhcpIsEnable(void)
 		if (Wifi_WaitForString(_WIFI_WAIT_TIME_LOW, &result, 2, "OK", "ERROR") == 0x00) break;// The timeout was completed and the string was not there
 		if (result == 2)		// It was find the "ERROR" String in the receiving information
 		break;
-		if (Wifi_ReturnInteger((int32_t*) &result, 1, ":") == 0x00) break;	// It searches for a ':' Character to know
-																			// the next integer value after that
-		switch (result) {
+		int32_t tmp;
+		if (Wifi_ReturnInteger(&tmp, 1, ":") == 0x00) break;
+		switch (tmp) {
 			case 0:
 				Wifi.StationDhcp = 0x00;
 				Wifi.SoftApDhcp = 0x00;
@@ -709,7 +715,9 @@ uint8_t Wifi_TcpIp_Ping(char *PingTo)
 		if (Wifi_WaitForString(_WIFI_WAIT_TIME_MED, &result, 3, "OK", "ERROR") == 0x00) break;// The timeout was completed and the string was not there
 		if (result == 2)		// It was find the "ERROR" String in the receiving information
 		break;
-		if (Wifi_ReturnInteger((int32_t*) &Wifi.TcpIpPingAnswer, 2, "+") == 0x00) break;
+		int32_t tmp;
+		if (Wifi_ReturnInteger(&tmp, 2, "+") == 0x00) break;
+		Wifi.TcpIpPingAnswer = (uint16_t) tmp;
 		returnVal = 0x01;
 	}
 	while (0);
@@ -747,8 +755,9 @@ uint8_t Wifi_TcpIp_GetMultiConnection(void)
 		if (Wifi_WaitForString(_WIFI_WAIT_TIME_LOW, &result, 2, "OK", "ERROR") == 0x00) break;// The timeout was completed and the string was not there
 		if (result == 2)		// It was find the "ERROR" String in the receiving information
 		break;
-		if (Wifi_ReturnInteger((int32_t*) &result, 1, ":") == 0x00) break;
-		Wifi.TcpIpMultiConnection = (uint8_t) result;
+		int32_t tmp;
+		if (Wifi_ReturnInteger(&tmp, 1, ":") == 0x00) break;
+		Wifi.TcpIpMultiConnection = (uint8_t) tmp;
 		returnVal = 0x01;
 	}
 	while (0);

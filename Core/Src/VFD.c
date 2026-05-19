@@ -63,11 +63,23 @@ void vfd_print (char* arr, uint8_t line, uint8_t offset) {
 	line = !line;
 	while ((arr[i] != '\0') && ((offset + count) < 20))
 	{
+		uint8_t ch;
+		if ((uint8_t)arr[i] == 0xD0) {
+			ch = (uint8_t)arr[i + 1] + 0x30;
+			i += 2;
+		} else if ((uint8_t)arr[i] == 0xD1) {
+			ch = (uint8_t)arr[i + 1] + 0x70;
+			i += 2;
+		} else {
+			ch = (uint8_t)arr[i];
+			i++;
+		}
+
 		for (uint8_t j = 0; j < 7; j++)
 		{
 			for (int8_t s = 4; s >= 0; s--)
 			{
-			  if ((symbol[(uint8_t)arr[count]][j] >> s) & 0x01)
+			  if ((symbol[ch][j] >> s) & 0x01)
 			  {
 				output_screen_buff_bin[19 - (offset + count)][(w * 2) + (57 + (70 * line))] |= BIT_SIN;
 				output_screen_buff_bin[19 - (offset + count)][(w * 2) + (58 + (70 * line))] |= BIT_SIN;
@@ -81,7 +93,6 @@ void vfd_print (char* arr, uint8_t line, uint8_t offset) {
 			}
 		}
 		w = 0;
-		i++;
 		count++;
 	}
 }
