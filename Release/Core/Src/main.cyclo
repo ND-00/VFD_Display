@@ -1,9 +1,0 @@
-../Core/Inc/website.h:39:6:extract_param	3
-../Core/Src/main.c:46:6:HAL_TIM_PeriodElapsedCallback	7
-../Core/Src/main.c:246:6:SystemClock_Config	3
-../Core/Src/main.c:401:5:_write	10
-../Core/Src/main.c:409:9:esp_client_init	10
-../Core/Src/main.c:457:9:esp_server_init	8
-../Core/Src/main.c:490:9:esp_update_AP	5
-../Core/Src/main.c:74:5:main	41
-../Core/Src/main.c:528:6:Error_Handler	1
