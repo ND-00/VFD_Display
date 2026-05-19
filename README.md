@@ -1,1 +1,1 @@
-VFD clock on BA64 display.
+Часы с погодой на дисплее BA64 на STM32 и ESP 
